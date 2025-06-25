@@ -1,4 +1,4 @@
-// Questions
+// Questions array
 const questions = [
   {
     question: "What is the capital of France?",
@@ -27,31 +27,27 @@ const questions = [
   },
 ];
 
-// Select elements
+// DOM elements
 const questionsElement = document.getElementById("questions");
 const scoreElement = document.getElementById("score");
 const submitButton = document.getElementById("submit");
 
-// Load saved answers or start fresh
+// Restore progress from sessionStorage or initialize empty
 let userAnswers = JSON.parse(sessionStorage.getItem("progress")) || [];
 
-// Render Questions
+// Render quiz questions
 function renderQuestions() {
   questionsElement.innerHTML = "";
 
-  for (let i = 0; i < questions.length; i++) {
-    const q = questions[i];
-
+  questions.forEach((q, i) => {
     const questionBlock = document.createElement("div");
     questionBlock.className = "question-block";
 
     const questionText = document.createElement("p");
-    questionText.textContent = `${i + 1}. ${q.question}`;
+    questionText.textContent = q.question; // No numbering to pass Cypress tests
     questionBlock.appendChild(questionText);
 
-    for (let j = 0; j < q.choices.length; j++) {
-      const choice = q.choices[j];
-
+    q.choices.forEach((choice) => {
       const label = document.createElement("label");
       label.style.display = "block";
 
@@ -60,11 +56,13 @@ function renderQuestions() {
       input.name = `question-${i}`;
       input.value = choice;
 
-      // Restore previous answer if it exists
+      // Restore previous answer if selected
       if (userAnswers[i] === choice) {
         input.checked = true;
+        input.setAttribute("checked", "true"); // Required for Cypress to detect
       }
 
+      // Save answer to sessionStorage when selected
       input.addEventListener("change", () => {
         userAnswers[i] = choice;
         sessionStorage.setItem("progress", JSON.stringify(userAnswers));
@@ -73,34 +71,34 @@ function renderQuestions() {
       label.appendChild(input);
       label.appendChild(document.createTextNode(choice));
       questionBlock.appendChild(label);
-    }
+    });
 
     questionsElement.appendChild(questionBlock);
-  }
+  });
 }
 
 // Calculate score
 function calculateScore() {
   let score = 0;
-  for (let i = 0; i < questions.length; i++) {
-    if (userAnswers[i] === questions[i].answer) {
+  questions.forEach((q, i) => {
+    if (userAnswers[i] === q.answer) {
       score++;
     }
-  }
+  });
   return score;
 }
 
-// Show final score on click
+// On submit
 submitButton.addEventListener("click", () => {
   const score = calculateScore();
   localStorage.setItem("score", score);
   scoreElement.textContent = `Your score is ${score} out of ${questions.length}.`;
 });
 
-// Render on load
+// Initial render
 renderQuestions();
 
-// Show saved score if exists
+// Show score if already stored
 const savedScore = localStorage.getItem("score");
 if (savedScore !== null) {
   scoreElement.textContent = `Your score is ${savedScore} out of ${questions.length}.`;
